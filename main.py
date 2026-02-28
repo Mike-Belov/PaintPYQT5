@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt, QPoint, QCoreApplication, QPropertyAnimation, QEasi
 from PyQt5.QtGui import QPainter, QPen, QPixmap,  QColor, QBrush, QIcon, QFont
 from color import choose_color
 from color_definition import *
+import data
 
 class Program(QMainWindow):
     def __init__(self):
@@ -20,10 +21,8 @@ class Program(QMainWindow):
         self.image.fill(Qt.white)
         
         # Карандаш
-        self.color = (0,0,0)
-        self.pen_color = QColor(*self.color)
-        self.penWidth = 3
-        self.pen = QPen(self.pen_color, self.penWidth)
+        self.pen_color = QColor(*data.color)
+        self.pen = QPen(self.pen_color, data.penWidth)
 
         # Создаем объект шрифта и задаем размер (например, 14)
         self.font = QFont()
@@ -34,20 +33,21 @@ class Program(QMainWindow):
 
         #Создаем меню
         self.menu_x = int(1400/2-350)
-        self.menu_y = -200
+        self.menu_y = -190
         self.is_mouse_on_menu = False
         self.setMouseTracking(True)
         self.setting_paint()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            print(data.color)
             self.drawing = True
             self.last_point = event.pos()
 
     def mouseMoveEvent(self, event):
         x, y = event.x(), event.y()
         if not self.is_mouse_on_menu:
-            if x >= self.menu_x and x <= self.menu_x + 700 and y <= 50:
+            if x >= self.menu_x and x <= self.menu_x + 700 and y <= 20:
                 self.is_mouse_on_menu = True
                 self.toggle_menu()
         else:
@@ -94,16 +94,27 @@ class Program(QMainWindow):
         btn1 = QPushButton("Кнопка 1")
         btn2 = QPushButton("Кнопка 2")
         btncolor = QPushButton("Выбор цвета")
+
         btn1.setFixedSize(*self.size_button)
+        btncolor.setFixedSize(*self.size_button)
         btn2.setFixedSize(*self.size_button)
+
         self.layout.addWidget(btn1)
         self.layout.addWidget(btn2)
+        self.layout.addWidget(btncolor)
+
+        btncolor.setStyleSheet("""
+            background-color: #007bff;
+            color: #ffffff;""")
+
+        btncolor.clicked.connect(choose_color)
+
         self.layout.addStretch() # Добавляет пустое пространство вниз
 
     def toggle_menu(self):
         self.animation = QPropertyAnimation(self.menu_frame, b"pos")
 
-        self.new_menu_y = -200 if self.menu_y >= 0 else 0
+        self.new_menu_y = -190 if self.menu_y >= 0 else 0
 
         self.animation.setStartValue(QPoint(self.menu_x, self.menu_y))
         self.animation.setDuration(450)
