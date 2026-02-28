@@ -31,8 +31,12 @@ class Program(QMainWindow):
 
         #Переменные для меню
         self.size_button = [120, 25]
+
         #Создаем меню
-        self.menu()
+        self.menu_x = int(1400/2-350)
+        self.menu_y = -200
+        self.is_mouse_on_menu = False
+        self.setMouseTracking(True)
         self.setting_paint()
 
     def mousePressEvent(self, event):
@@ -41,6 +45,16 @@ class Program(QMainWindow):
             self.last_point = event.pos()
 
     def mouseMoveEvent(self, event):
+        x, y = event.x(), event.y()
+        if not self.is_mouse_on_menu:
+            if x >= self.menu_x and x <= self.menu_x + 700 and y <= 50:
+                self.is_mouse_on_menu = True
+                self.toggle_menu()
+        else:
+            if not x >= self.menu_x or not x <= self.menu_x + 700 or not y <= 200:
+                self.is_mouse_on_menu = False
+                self.toggle_menu() 
+
         if (event.buttons() & Qt.LeftButton) & self.drawing:
             painter = QPainter(self.image)
             painter.setPen(self.pen)
@@ -60,53 +74,17 @@ class Program(QMainWindow):
         if event.key() == Qt.Key_Escape:
             sys.exit()
 
-    def menu(self):
-        # Создание кнопки
-        btn = QPushButton('Файл', self)
-        btn.setFixedSize(*self.size_button) 
-        btn.move(0,0)
-
-        # Меню действий
-        menu = QMenu(self)
-        # Добавляем действия (пункты меню)
-        action1 = QAction("Сохранить как", self)
-        action2 = QAction("Открыть", self)
-        action3 = QAction("Выйти", self)
-
-       # Добавляем действия в меню  
-        menu.addAction(action1)
-        menu.addAction(action2)
-        menu.addSeparator()  # Разделитель  
-        menu.addAction(action3)
-
-        # Подключаем сигналы к действиям
-        action1.triggered.connect(self.action_one)
-        action2.triggered.connect(self.action_two)
-        action3.triggered.connect(QCoreApplication.instance().quit)
-
-        # Подключение сигнала нажатия к функции
-        btn.setMenu(menu)
-
-        # Статус бар
-        self.status = self.statusBar()
-        self.status.showMessage(f'Карандаш|Размер:{self.penWidth}|Цвет: {color_definition(self.color)}')
-        self.status.setFont(self.font)
-
     def setting_paint(self):
-        # Кнопка для открытия/закрытия меню
-        self.toggle_button = QPushButton("☰ Меню", self)
-        self.toggle_button.setFixedSize(*self.size_button)
-        self.toggle_button.move(120,0)
-        self.toggle_button.clicked.connect(self.toggle_menu)
-        
         #Создаем выезжающий фрейм (меню)
         self.menu_frame = QFrame(self)
         self.menu_frame.setFrameShape(QFrame.StyledPanel) # Рисуем рамку, чтобы её было видно
-        self.menu_frame.setStyleSheet("background-color: #787878; " \
-        "border: 2px solid gray;" \
-        "  border-radius: 10px;")
+        self.menu_frame.setStyleSheet("""
+        border-radius: 10px;
+        box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
+        background: rgb(100, 100, 100);       
+        """)
         
-        self.menu_frame.setGeometry(int(1400/2-350), 0, 700, 10)
+        self.menu_frame.setGeometry(self.menu_x, self.menu_y, 700, 200)
         self.layout = QHBoxLayout()
 
         # Привязываем лейаут к фрейму
@@ -115,6 +93,7 @@ class Program(QMainWindow):
         # Добавляем кнопки в меню
         btn1 = QPushButton("Кнопка 1")
         btn2 = QPushButton("Кнопка 2")
+        btncolor = QPushButton("Выбор цвета")
         btn1.setFixedSize(*self.size_button)
         btn2.setFixedSize(*self.size_button)
         self.layout.addWidget(btn1)
@@ -122,17 +101,16 @@ class Program(QMainWindow):
         self.layout.addStretch() # Добавляет пустое пространство вниз
 
     def toggle_menu(self):
-        if self.menu_frame.height()==10:
-            self.animation = QPropertyAnimation(self.menu_frame, b"minimumHeight")
-            self.menu_frame.height()
-        else:
-            self.animation = QPropertyAnimation(self.menu_frame, b"maximumHeight")
-        height = self.menu_frame.height()
-        new_height = 200 if height == 10 else 10  # Переключение ширины
-        self.animation.setStartValue(height)
-        self.animation.setDuration(400)
-        self.animation.setEndValue(new_height)
+        self.animation = QPropertyAnimation(self.menu_frame, b"pos")
+
+        self.new_menu_y = -200 if self.menu_y >= 0 else 0
+
+        self.animation.setStartValue(QPoint(self.menu_x, self.menu_y))
+        self.animation.setDuration(450)
+        self.animation.setEndValue(QPoint(self.menu_x, self.new_menu_y))
         self.animation.start()
+
+        self.menu_y = self.new_menu_y
 
     def action_one(self):
         ...
