@@ -1,0 +1,24 @@
+QPushButton {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    padding: 10px;
+}
+QPushButton:hover {
+    background-color: #45a049;
+    border-radius: 10px;
+    box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
+    font-size: 12px;
+    width: 200px;
+    height: 50px;
+}
+QFrame {
+    border-radius: 10px;
+    box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
+    background: rgb(100, 100, 100);  
+}
+QStatusBar {
+    color: black;
+    font-size: 16px;
+}

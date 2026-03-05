@@ -1,10 +1,11 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QLabel, QAction, QMenu, QMessageBox, QGroupBox, QFrame, QHBoxLayout, QVBoxLayout
+from PyQt5 import QtGui
+from PyQt5.QtWinExtras import QtWin  
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QAction, QMenu, QMessageBox, QGroupBox, QFrame, QHBoxLayout, QSlider
 from PyQt5.QtCore import Qt, QPoint, QCoreApplication, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QPainter, QPen, QPixmap,  QColor, QBrush, QIcon, QFont
-from color import choose_color
 from color_definition import *
-import data
+from tkinter import colorchooser
 
 class Program(QMainWindow):
     def __init__(self):
@@ -12,6 +13,8 @@ class Program(QMainWindow):
         self.setWindowTitle("PaintMisha")
         self.WIDTH, self.HIGHT = 1400, 900
         self.setFixedSize(self.WIDTH, self.HIGHT)
+        myappid = 'mycompany.myproduct.subproduct.version'                         
+        QtWin.setCurrentProcessExplicitAppUserModelID(myappid)  
 
         self.drawing = False
         self.last_point = QPoint
@@ -21,26 +24,21 @@ class Program(QMainWindow):
         self.image.fill(Qt.white)
         
         # Карандаш
-        self.pen_color = QColor(*data.color)
-        self.pen = QPen(self.pen_color, data.penWidth)
-
-        # Создаем объект шрифта и задаем размер (например, 14)
-        self.font = QFont()
-        self.font.setPointSize(12)
-
-        #Переменные для меню
-        self.size_button = [120, 25]
+        self.color = "#000000"
+        self.penWidth = 10
+        self.pen_color = QColor(self.color)
 
         #Создаем меню
         self.menu_x = int(1400/2-350)
         self.menu_y = -190
         self.is_mouse_on_menu = False
         self.setMouseTracking(True)
-        self.setting_paint()
+        self.settingPaint()
+
+        self.loadStylesheet("style.css")
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            print(data.color)
             self.drawing = True
             self.last_point = event.pos()
 
@@ -49,15 +47,17 @@ class Program(QMainWindow):
         if not self.is_mouse_on_menu:
             if x >= self.menu_x and x <= self.menu_x + 700 and y <= 20:
                 self.is_mouse_on_menu = True
-                self.toggle_menu()
+                self.toggleMenu()
         else:
             if not x >= self.menu_x or not x <= self.menu_x + 700 or not y <= 200:
                 self.is_mouse_on_menu = False
-                self.toggle_menu() 
+                self.toggleMenu() 
 
         if (event.buttons() & Qt.LeftButton) & self.drawing:
             painter = QPainter(self.image)
-            painter.setPen(self.pen)
+            self.pen = QPen(self.pen_color, self.penWidth)
+            pen = QPen(self.pen_color, self.penWidth)
+            painter.setPen(pen)
             painter.drawLine(self.last_point, event.pos())
             self.last_point = event.pos()
             self.update() # Перерисовать виджет
@@ -74,16 +74,11 @@ class Program(QMainWindow):
         if event.key() == Qt.Key_Escape:
             sys.exit()
 
-    def setting_paint(self):
+    def settingPaint(self):
+        self.stateBar()
+
         #Создаем выезжающий фрейм (меню)
         self.menu_frame = QFrame(self)
-        self.menu_frame.setFrameShape(QFrame.StyledPanel) # Рисуем рамку, чтобы её было видно
-        self.menu_frame.setStyleSheet("""
-        border-radius: 10px;
-        box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
-        background: rgb(100, 100, 100);       
-        """)
-        
         self.menu_frame.setGeometry(self.menu_x, self.menu_y, 700, 200)
         self.layout = QHBoxLayout()
 
@@ -91,31 +86,40 @@ class Program(QMainWindow):
         self.menu_frame.setLayout(self.layout)
 
         # Добавляем кнопки в меню
-        btn1 = QPushButton("Кнопка 1")
-        btn2 = QPushButton("Кнопка 2")
-        btncolor = QPushButton("Выбор цвета")
+        # Создание ползунка (горизонтальный)
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setRange(50, 400)  # Минимальный и максимальный размер
+        self.slider.setValue(100)      # Начальный размер
+        self.layout.addWidget(self.slider)
 
-        btn1.setFixedSize(*self.size_button)
-        btncolor.setFixedSize(*self.size_button)
-        btn2.setFixedSize(*self.size_button)
+        btn1 = QPushButton("Открыть")
+        btn2 = QPushButton("Сохранить как")
+        btncolor = QPushButton("Выбор цвета")
 
         self.layout.addWidget(btn1)
         self.layout.addWidget(btn2)
         self.layout.addWidget(btncolor)
 
-        btncolor.setStyleSheet("""
-            background-color: #007bff;
-            color: #ffffff;""")
+        btncolor.clicked.connect(self.chooseColor)
 
-        btncolor.clicked.connect(choose_color)
+    def stateBar(self):
+        """Создает и обновляет статус бар"""
+        self.status = self.statusBar()
+        self.status.showMessage(f'Карандаш|Размер:{self.penWidth}|Цвет: {color_definition(self.color)}')
+        self.update()
 
-        self.layout.addStretch() # Добавляет пустое пространство вниз
+    def chooseColor(self):
+        """Открываем диалоговое окно выбора цвета"""
+        color_menu = colorchooser.askcolor(title="Выберите цвет", initialcolor=self.color)
+        if color_menu[1]:
+            self.color = color_menu[1]  # Получаем RGB значения  
+            self.pen_color = QColor(self.color)
+            self.stateBar()
+            self.update() 
 
-    def toggle_menu(self):
+    def toggleMenu(self):
         self.animation = QPropertyAnimation(self.menu_frame, b"pos")
-
         self.new_menu_y = -190 if self.menu_y >= 0 else 0
-
         self.animation.setStartValue(QPoint(self.menu_x, self.menu_y))
         self.animation.setDuration(450)
         self.animation.setEndValue(QPoint(self.menu_x, self.new_menu_y))
@@ -123,10 +127,10 @@ class Program(QMainWindow):
 
         self.menu_y = self.new_menu_y
 
-    def action_one(self):
+    def actionOne(self):
         ...
 
-    def action_two(self):
+    def actionTwo(self):
         # Создание диалогового окна
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
@@ -137,11 +141,21 @@ class Program(QMainWindow):
         # Отображение
         msg.exec_()
 
-    def action_two(self):
+    def actionTwo(self):
         QMessageBox.information("Menu", "Выбрано Действие 2")
+
+    def loadStylesheet(self, file_path):
+        """Функция для загрузки файла стилей"""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            app.setStyleSheet(f.read())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Program()
+
+    # Создание иконки
+    icon = 'icon.jfif'
+    app.setWindowIcon(QtGui.QIcon(icon))
+    window.setWindowIcon(QtGui.QIcon(icon))
     window.show()
     sys.exit(app.exec_())
