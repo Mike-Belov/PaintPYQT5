@@ -1,11 +1,12 @@
 import sys
 from PyQt5 import QtGui
 from PyQt5.QtWinExtras import QtWin  
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QAction, QMenu, QMessageBox, QGroupBox, QFrame, QHBoxLayout, QSlider
-from PyQt5.QtCore import Qt, QPoint, QCoreApplication, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QPainter, QPen, QPixmap,  QColor, QBrush, QIcon, QFont
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QFrame, QHBoxLayout, QSlider
+from PyQt5.QtCore import Qt, QPoint, QPropertyAnimation
+from PyQt5.QtGui import QPainter, QPen, QPixmap,  QColor
 from color_definition import *
 from tkinter import colorchooser
+import threading
 
 class Program(QMainWindow):
     def __init__(self):
@@ -33,7 +34,9 @@ class Program(QMainWindow):
         self.menu_y = -190
         self.is_mouse_on_menu = False
         self.setMouseTracking(True)
-        self.settingPaint()
+
+        self.status = self.statusBar()
+        self.settingPaint()  
 
         self.loadStylesheet("style.css")
 
@@ -56,7 +59,9 @@ class Program(QMainWindow):
         if (event.buttons() & Qt.LeftButton) & self.drawing:
             painter = QPainter(self.image)
             self.pen = QPen(self.pen_color, self.penWidth)
-            pen = QPen(self.pen_color, self.penWidth)
+
+            painter.setRenderHint(QPainter.Antialiasing, True) #для плавной рисовки
+            pen = QPen(self.pen_color, self.penWidth, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin) #кисть с плавной рисовкой
             painter.setPen(pen)
             painter.drawLine(self.last_point, event.pos())
             self.last_point = event.pos()
@@ -85,26 +90,34 @@ class Program(QMainWindow):
         # Привязываем лейаут к фрейму
         self.menu_frame.setLayout(self.layout)
 
-        # Добавляем кнопки в меню
         # Создание ползунка (горизонтальный)
         self.slider = QSlider(Qt.Horizontal)
-        self.slider.setRange(50, 400)  # Минимальный и максимальный размер
-        self.slider.setValue(100)      # Начальный размер
+        self.slider.setRange(1, 45)  # Диапазон размеров # Минимальный и максимальный размер
+        self.slider.valueChanged.connect(self.change_size)
+        self.slider.setValue(self.penWidth)     # Начальный размер
         self.layout.addWidget(self.slider)
 
         btn1 = QPushButton("Открыть")
         btn2 = QPushButton("Сохранить как")
+        btn3 = QPushButton("Очистить")
         btncolor = QPushButton("Выбор цвета")
-
+  
         self.layout.addWidget(btn1)
         self.layout.addWidget(btn2)
+        self.layout.addWidget(btn3)
         self.layout.addWidget(btncolor)
+        
+        btn2.clicked.connect(self.actionTwo)
+        btn3.clicked.connect(self.clear)
 
         btncolor.clicked.connect(self.chooseColor)
 
+    def change_size(self, value):
+        self.penWidth = value
+
+
     def stateBar(self):
         """Создает и обновляет статус бар"""
-        self.status = self.statusBar()
         self.status.showMessage(f'Карандаш|Размер:{self.penWidth}|Цвет: {color_definition(self.color)}')
         self.update()
 
@@ -114,7 +127,8 @@ class Program(QMainWindow):
         if color_menu[1]:
             self.color = color_menu[1]  # Получаем RGB значения  
             self.pen_color = QColor(self.color)
-            self.stateBar()
+            t2 = threading.Thread(target=self.stateBar)
+            t2.start()
             self.update() 
 
     def toggleMenu(self):
@@ -124,25 +138,29 @@ class Program(QMainWindow):
         self.animation.setDuration(450)
         self.animation.setEndValue(QPoint(self.menu_x, self.new_menu_y))
         self.animation.start()
+        t2 = threading.Thread(target=self.stateBar)
+        t2.start()
 
         self.menu_y = self.new_menu_y
 
     def actionOne(self):
-        ...
-
-    def actionTwo(self):
         # Создание диалогового окна
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
         msg.setWindowTitle("Информация")
         msg.setText("Это информационное сообщение")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        QMessageBox.information("Menu", "Выбрано Действие 2")
 
         # Отображение
         msg.exec_()
 
     def actionTwo(self):
-        QMessageBox.information("Menu", "Выбрано Действие 2")
+        self.image.save("saved_image.png") # Сохраняет в формате PNG
+
+    def clear(self):
+        self.image.fill(Qt.white)
+        self.update()
 
     def loadStylesheet(self, file_path):
         """Функция для загрузки файла стилей"""

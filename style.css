@@ -22,3 +22,32 @@ QStatusBar {
     color: black;
     font-size: 16px;
 }
+
+QSlider::horizontal {
+    height: 20px;
+}
+
+QSlider::groove:horizontal {
+    background: #DDDDDD; 
+    height: 6px; 
+    border-radius: 3px; 
+}
+
+QSlider::sub-page:horizontal {
+    background: #3498DB; 
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background: white; 
+    border: 2px solid #3498DB; 
+    width: 14px; 
+    height: 14px; 
+    margin: -4px 0; 
+    border-radius: 7px; 
+}
+
+QSlider::handle:horizontal:hover {
+    background: #EAF2F8;
+    border: 2px solid #2874A6;
+}
