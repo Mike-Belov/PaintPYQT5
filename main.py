@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtGui
 from PyQt5.QtWinExtras import QtWin  
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QFrame, QHBoxLayout, QSlider
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QMessageBox, QFrame, QHBoxLayout, QSlider, QFileDialog
 from PyQt5.QtCore import Qt, QPoint, QPropertyAnimation
 from PyQt5.QtGui import QPainter, QPen, QPixmap,  QColor
 from color_definition import *
@@ -107,10 +107,20 @@ class Program(QMainWindow):
         self.layout.addWidget(btn3)
         self.layout.addWidget(btncolor)
         
+        btn1.clicked.connect(self.open_image)
         btn2.clicked.connect(self.actionTwo)
         btn3.clicked.connect(self.clear)
 
         btncolor.clicked.connect(self.chooseColor)
+
+    def open_image(self):
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt)", options=options)
+        if fileName:
+            print(f"Выбранный файл: {fileName}")
+            # Загружаем изображение
+            self.image = QPixmap(fileName)
+        
 
     def change_size(self, value):
         self.penWidth = value
