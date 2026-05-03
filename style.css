@@ -1,15 +1,16 @@
 QPushButton {
     background-color: #4CAF50;
     color: white;
-    font-size: 16px;
+    font-size: 12px;
     border-radius: 5px;
-    padding: 10px;
+    padding: 7px;
+    font: bold;
 }
 QPushButton:hover {
     background-color: #45a049;
     border-radius: 10px;
     box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.2);
-    font-size: 12px;
+    font-size: 10px;
     width: 200px;
     height: 50px;
 }
@@ -50,4 +51,17 @@ QSlider::handle:horizontal {
 QSlider::handle:horizontal:hover {
     background: #EAF2F8;
     border: 2px solid #2874A6;
+}
+
+QLabel{
+    color: white;
+    font-size: 12px;
+    font: bold;
+}
+QMessageBox{
+    text-decoration: none;
+    color: green;
+    font-size: 12px;
+    border: 2px;
+    font: bold;
 }
